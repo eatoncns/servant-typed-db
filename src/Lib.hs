@@ -10,6 +10,7 @@ module Lib
 import Data.Aeson
 import Data.Aeson.TH
 import Data.Pool
+import Data.Tuple.Curry
 import Database.PostgreSQL.Typed
 import DatabaseConnection
 import Network.Wai
@@ -32,7 +33,7 @@ type API = "users" :> Get '[JSON] [User]
 useTPGDatabase database
 
 initConnectionPool :: IO (Pool PGConnection)
-initConnectionPool = createPool (pgConnect database) 
+initConnectionPool = createPool (pgConnect database)
                                 pgDisconnect
                                 1   -- stripes
                                 60  -- keep unused connections open for a minute
@@ -52,7 +53,4 @@ server conns = liftIO $ withResource conns loadUsers
 loadUsers :: PGConnection -> IO[User]
 loadUsers conn = do
   rows <- pgQuery conn [pgSQL|SELECT id, first_name, last_name FROM users|]
-  return (map userFromRow rows)
-  
-userFromRow :: (Int32, String, String) -> User
-userFromRow (id, firstName, lastName) = User id firstName lastName  
+  return (map (uncurryN User) rows)

@@ -21,6 +21,7 @@ library
                      , postgresql-typed
                      , resource-pool
                      , servant-server
+                     , tuple
                      , utf8-string
                      , wai
                      , warp
