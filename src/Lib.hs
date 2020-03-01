@@ -4,7 +4,9 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeOperators   #-}
 module Lib
-    ( startApp
+    ( app
+    , initConnectionPool
+    , startApp
     ) where
 
 import Data.Aeson
@@ -32,8 +34,8 @@ type API = "users" :> Get '[JSON] [User]
 
 useTPGDatabase database
 
-initConnectionPool :: IO (Pool PGConnection)
-initConnectionPool = createPool (pgConnect database)
+initConnectionPool :: PGDatabase -> IO (Pool PGConnection)
+initConnectionPool db = createPool (pgConnect db)
                                 pgDisconnect
                                 1   -- stripes
                                 60  -- keep unused connections open for a minute
@@ -41,8 +43,11 @@ initConnectionPool = createPool (pgConnect database)
 
 startApp :: IO ()
 startApp = do
-  connectionPool <- initConnectionPool
-  run 8080 (serve api $ server connectionPool)
+  connectionPool <- initConnectionPool database
+  run 8080 $ app connectionPool
+  
+app :: Pool PGConnection -> Application
+app connectionPool = serve api $ server connectionPool
 
 api :: Proxy API
 api = Proxy
