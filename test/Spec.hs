@@ -14,10 +14,10 @@ import Servant
 main :: IO ()
 main = do
   dbURI <- readProcess "pg_tmp" ["-t", "-w", "5"] []
-  let (host, port) = parseDbURI dbURI
-  db_pool <- initConnectionPool defaultPGDatabase{pgDBAddr = Left (host, port)}
-  hspec (spec $ app db_pool)
-
+  dbPool <- initConnectionPool $ parseDbURI dbURI
+  -- TODO: initialise db (maybe look at applying migrations)
+  hspec (spec $ app dbPool)
+  
 spec :: Application -> Spec
 spec app =
   with (return app) $
