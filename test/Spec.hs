@@ -15,7 +15,8 @@ main :: IO ()
 main = do
   dbURI <- readProcess "pg_tmp" ["-t", "-w", "5"] []
   dbPool <- initConnectionPool $ parseDbURI dbURI
-  -- TODO: initialise db (maybe look at applying migrations)
+  callProcess "sqitch" ["deploy", "--target", dbURI]
+  -- TODO: seed the db
   hspec (spec $ app dbPool)
   
 spec :: Application -> Spec
