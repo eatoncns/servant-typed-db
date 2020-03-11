@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Main (main) where
 
 import Lib (app, initConnectionPool)
@@ -11,20 +13,24 @@ import Data.Pool
 import DatabaseConnection
 import Servant
 
+useTPGDatabase database
+
 main :: IO ()
 main = do
   dbURI <- readProcess "pg_tmp" ["-t", "-w", "5"] []
   dbPool <- initConnectionPool $ parseDbURI dbURI
   callProcess "sqitch" ["deploy", "--target", dbURI]
-  -- TODO: seed the db
+  withResource dbPool seedDB
   hspec (spec $ app dbPool)
+
+seedDB :: PGConnection -> IO Int
+seedDB db = pgExecute db [pgSQL|INSERT INTO users (first_name, last_name) VALUES ('Isaac', 'Newton'), ('Albert', 'Einstein')|]
   
 spec :: Application -> Spec
 spec app =
   with (return app) $
-  describe "GET /users" $ do
-    it "responds with 200" $ get "/users" `shouldRespondWith` 200
-    it "responds with [User]" $ do
-      let users =
-            "[{\"userId\":1,\"userFirstName\":\"Isaac\",\"userLastName\":\"Newton\"},{\"userId\":2,\"userFirstName\":\"Albert\",\"userLastName\":\"Einstein\"}]"
-      get "/users" `shouldRespondWith` users
+  describe "GET /users" $
+  it "responds with [User]" $ do
+    let users =
+          [json|[{userFirstName:"Isaac",userLastName:"Newton",userId:1},{userFirstName:"Albert",userLastName:"Einstein",userId:2}]|]
+    get "/users" `shouldRespondWith` users
