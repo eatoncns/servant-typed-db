@@ -13,8 +13,6 @@ import Data.Pool
 import DatabaseConnection
 import Servant
 
-useTPGDatabase database
-
 main :: IO ()
 main = do
   dbURI <- readProcess "pg_tmp" ["-t", "-w", "5"] []
@@ -25,7 +23,7 @@ main = do
 
 seedDB :: PGConnection -> IO Int
 seedDB db = pgExecute db [pgSQL|INSERT INTO users (first_name, last_name) VALUES ('Isaac', 'Newton'), ('Albert', 'Einstein')|]
-  
+
 spec :: Application -> Spec
 spec app =
   with (return app) $

@@ -32,8 +32,6 @@ instance ToJSON User
 
 type API = "users" :> Get '[JSON] [User]
 
-useTPGDatabase database
-
 initConnectionPool :: PGDatabase -> IO (Pool PGConnection)
 initConnectionPool db = createPool (pgConnect db)
                                 pgDisconnect
@@ -41,11 +39,11 @@ initConnectionPool db = createPool (pgConnect db)
                                 60  -- keep unused connections open for a minute
                                 10  -- max. 10 connections per stripe
 
-startApp :: IO ()
-startApp = do
-  connectionPool <- initConnectionPool database
+startApp :: String -> IO ()
+startApp dbURI = do
+  connectionPool <- initConnectionPool $ parseDbURI dbURI
   run 8080 $ app connectionPool
-  
+
 app :: Pool PGConnection -> Application
 app connectionPool = serve api $ server connectionPool
 

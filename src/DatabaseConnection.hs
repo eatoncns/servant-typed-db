@@ -1,13 +1,12 @@
-module DatabaseConnection (database, parseDbURI) where
+module DatabaseConnection (parseDbURI) where
 
 import Data.ByteString.UTF8 as BSU
+import Data.List.Split
 import Database.PostgreSQL.Typed
 import Network.Socket
 import Network.URI
 
-database :: PGDatabase
-database = defaultPGDatabase{pgDBName = BSU.fromString "servant"}
-
+-- db uri of form postgres://user:password@host/dbname
 parseDbURI :: String -> PGDatabase
 parseDbURI uri = case parseURI uri of
   Nothing -> error "invalid URI"
@@ -17,6 +16,7 @@ parseDbURI uri = case parseURI uri of
         pgDBAddr = Left (hostFrom auth, portFrom auth)
       , pgDBName = BSU.fromString (dbNameFrom uri)
       , pgDBUser = BSU.fromString (userFrom auth)
+      , pgDBPass = BSU.fromString (passwordFrom auth)
     }
 
 hostFrom :: URIAuth -> HostName
@@ -29,4 +29,20 @@ dbNameFrom :: URI -> String
 dbNameFrom = tail . uriPath  -- remove preceding /
 
 userFrom :: URIAuth -> String
-userFrom = init . uriUserInfo  -- remove trailing @
+userFrom = firstElementOf . userInfo
+
+passwordFrom :: URIAuth -> String
+passwordFrom = secondElementIfExists . userInfo
+
+userInfo :: URIAuth -> [String]
+userInfo = splitOn ":" . init . uriUserInfo  -- remove trailing @
+
+
+firstElementOf :: [String] -> String
+firstElementOf (x:xs) = x
+firstElementOf [] = ""
+
+secondElementIfExists :: [String] -> String
+secondElementIfExists (x:y:ys) = y
+secondElementIfExists (x:[]) = ""
+secondElementIfExists [] = ""

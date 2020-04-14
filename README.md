@@ -12,7 +12,10 @@ Example test makes use of [pg_tmp](http://eradman.com/ephemeralpg/) to spin up a
 Initial setup is a little manual at this point. The following need to be installed prior to dev work:
 
 - [Haskell stack](https://docs.haskellstack.org/en/stable/README/)
-- Running postgresql instance with db named `servant`
+- Running postgresql instance
+- Environment variable `DB_URI` set to database URI
+- Environment variables set for postgresql-typed as described
+  [here](https://hackage.haskell.org/package/postgresql-typed-0.6.1.0/docs/Database-PostgreSQL-Typed.html#g:3)
 - [sqitch](https://sqitch.org/)
 
 Assuming that postgres is running at default port the following command will migrate db:
