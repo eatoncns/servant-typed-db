@@ -1,3 +1,4 @@
 .stack-work
 .idea
 typed-db.iml
+bin/*
